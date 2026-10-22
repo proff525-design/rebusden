@@ -2,3 +2,4 @@
 apk/
 *.keystore
 node_modules/
+*.idsig
