@@ -1,5 +1,4 @@
-# Служебное
-.DS_Store
-Thumbs.db
+# служебное: android-проект и ключ подписи не хранятся в репозитории
+apk/
+*.keystore
 node_modules/
-*.log
