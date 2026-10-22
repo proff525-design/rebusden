@@ -1,0 +1,16 @@
+{
+  "name": "РебусДень — ежедневный ребус",
+  "short_name": "РебусДень",
+  "description": "Один ребус в день на всю планету. Решай, держи серию и делись результатом.",
+  "lang": "ru",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1026",
+  "theme_color": "#1a1140",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>РебусДень — ежедневный ребус</title>
+<meta name="description" content="Один ребус в день для всего мира. Решай, держи серию и делись результатом.">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1a1140">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta property="og:title" content="РебусДень — один ребус в день на всю планету">
+<meta property="og:description" content="Реши ребус, получи сетку результата и брось вызов друзьям. 🔥">
+<meta property="og:image" content="icon.svg">
+<meta property="og:type" content="website">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">🧠 <span>Ребус<em>День</em></span></div>
+  <div class="header-actions">
+    <div class="chip" title="Твоя серия">🔥 <span id="streakVal">0</span></div>
+    <button class="icon-btn" id="btnHelp" title="Правила">❓</button>
+    <button class="icon-btn" id="btnStats" title="Статистика">📊</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="daily">📅 Сегодня</button>
+  <button class="tab" data-tab="train">🎯 Тренировка</button>
+  <button class="tab" data-tab="builder">🧩 Свои</button>
+  <button class="tab" data-tab="archive">🗂 Архив</button>
+</nav>
+
+<main>
+
+  <!-- ============ ОСНОВНОЙ ЭКРАН ============ -->
+  <section class="screen active" id="screen-daily">
+
+    <div class="puzzle-meta">
+      <span id="puzzleNumber">Ребус #…</span>
+      <span class="dots" id="attemptDots"></span>
+      <span id="puzzleLength">—</span>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="card">
+      <div class="rebus-frame">
+        <div class="rebus-picture" id="rebusPicture"></div>
+        <div class="rebus-caption" id="rebusCaption">какое слово тут зашифровано?</div>
+      </div>
+
+      <div class="status-line" id="statusLine"></div>
+
+      <form class="guess-row" id="guessForm" autocomplete="off">
+        <input type="text" id="guessInput" placeholder="Введите слово" spellcheck="false" autocapitalize="characters">
+        <button type="submit" class="btn primary" id="guessBtn">ОК</button>
+      </form>
+
+      <div class="card-actions">
+        <button class="btn ghost" id="btnHint">💡 Подсказка</button>
+        <button class="btn ghost" id="btnShare" disabled>📤 Сетка</button>
+        <button class="btn ghost" id="btnCard" disabled>🖼 Карточка</button>
+      </div>
+
+      <div class="hint-box" id="hintBox" hidden></div>
+    </div>
+
+    <div class="mini-note">Правила: <button class="link" id="linkRules">как решать ребусы</button></div>
+  </section>
+
+  <!-- ============ ТРЕНИРОВКА ============ -->
+  <section class="screen" id="screen-train">
+    <div class="puzzle-meta">
+      <span>🎯 Тренировка · без ограничений</span>
+      <span class="dots" id="trainDots"></span>
+      <span id="trainLength">—</span>
+    </div>
+    <div class="board" id="trainBoard"></div>
+    <div class="card">
+      <div class="rebus-frame">
+        <div class="rebus-picture" id="trainPicture"></div>
+        <div class="rebus-caption" id="trainCaption">разминка для мозга</div>
+      </div>
+      <div class="status-line" id="trainStatus"></div>
+      <form class="guess-row" id="trainForm" autocomplete="off">
+        <input type="text" id="trainInput" placeholder="Введите слово" spellcheck="false" autocapitalize="characters">
+        <button type="submit" class="btn primary">ОК</button>
+      </form>
+      <div class="card-actions">
+        <button class="btn ghost" id="trainHintBtn">💡 Подсказка</button>
+        <button class="btn ghost" id="trainShareBtn" disabled>📤 Сетка</button>
+        <button class="btn ghost" id="trainCardBtn" disabled>🖼 Карточка</button>
+        <button class="btn ghost" id="trainNewBtn">🔁</button>
+      </div>
+      <div class="hint-box" id="trainHintBox" hidden></div>
+    </div>
+  </section>
+
+  <!-- ============ КОНСТРУКТОР ============ -->
+  <section class="screen" id="screen-builder">
+    <div class="puzzle-meta">
+      <span>🧩 Собери свой ребус</span>
+      <span id="builderCount"></span>
+    </div>
+
+    <div class="card">
+      <div class="builder-label">1. Выбери картинку</div>
+      <div class="emoji-picker" id="emojiPicker"></div>
+
+      <div class="builder-label">2. Выбери знак</div>
+      <div class="sign-picker" id="signPicker"></div>
+
+      <div class="rebus-frame">
+        <div class="rebus-picture" id="builderPicture"></div>
+        <div class="rebus-caption">так это увидит твой друг</div>
+      </div>
+
+      <div class="builder-answer" id="builderAnswer"></div>
+
+      <div class="card-actions">
+        <button class="btn ghost" id="builderRandom">🎲 Случайный</button>
+        <button class="btn ghost" id="builderPlay">▶ Играть</button>
+      </div>
+      <div class="card-actions">
+        <button class="btn ghost" id="builderText">📤 Бросить вызов</button>
+        <button class="btn ghost" id="builderCard">🖼 Карточка</button>
+      </div>
+    </div>
+
+    <div class="mini-note">Конструктор собирает только проверенные комбинации — друг точно получит решаемый ребус.</div>
+  </section>
+
+  <!-- ============ АРХИВ ============ -->
+  <section class="screen" id="screen-archive">
+    <div class="puzzle-meta"><span>Прошлые дни — догоняй серию</span></div>
+    <div class="archive-list" id="archiveList"></div>
+  </section>
+
+</main>
+
+<footer class="footer">РебусДень · прототип · ежедневный ребус для всей планеты</footer>
+
+<!-- ============ МОДАЛКА ПРАВИЛ ============ -->
+<div class="modal" id="modalRules">
+  <div class="modal-card">
+    <button class="modal-close" data-close>✕</button>
+    <h2>🧩 Как решать</h2>
+    <p class="muted">На картинке зашифровано слово. Знаки подсказывают, что с ним делать:</p>
+    <ul class="rules">
+      <li><span class="rule-demo"><b>,</b>😴</span><div><b>Запятая слева</b> — убрать первую букву слова</div></li>
+      <li><span class="rule-demo">😴<b>,</b></span><div><b>Запятая справа</b> — убрать последнюю букву</div></li>
+      <li><span class="rule-demo"><i class="mini-letter">В</i>😴</span><div><b>Буква сверху</b> — поставить её перед словом</div></li>
+      <li><span class="rule-demo">😴<i class="mini-letter below">Т</i></span><div><b>Буква снизу</b> — поставить её после слова</div></li>
+      <li><span class="rule-demo">😴 <b class="rev">↻</b></span><div><b>Круговая стрелка</b> — прочитать слово справа налево</div></li>
+    </ul>
+    <p class="muted">Попыток — 5. После решения получишь сетку результата и сможешь поделиться ею с друзьями. Один ребус в день <b>на всех</b> — кто решил быстрее, тот молодец. 🔥</p>
+    <button class="btn primary wide" data-close>Понятно!</button>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА СТАТИСТИКИ ============ -->
+<div class="modal" id="modalStats">
+  <div class="modal-card">
+    <button class="modal-close" data-close>✕</button>
+    <h2>📊 Статистика</h2>
+    <div class="stats-grid">
+      <div><b id="stPlayed">0</b><span>сыграно</span></div>
+      <div><b id="stWon">0</b><span>решено</span></div>
+      <div><b id="stStreak">0</b><span>серия</span></div>
+      <div><b id="stBest">0</b><span>рекорд</span></div>
+    </div>
+    <h3>Распределение попыток</h3>
+    <div class="dist" id="dist"></div>
+    <button class="btn primary wide" data-close>Закрыть</button>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА «РЕКЛАМЫ» (демо) ============ -->
+<div class="modal" id="modalAd">
+  <div class="modal-card ad-card">
+    <div class="ad-label">РЕКЛАМА · демо</div>
+    <div class="ad-art">📺</div>
+    <p>Так в игре выглядит <b>вознаграждаемое видео</b> (rewarded ad) — главный источник дохода казуалок.</p>
+    <button class="btn primary wide" id="adCloseBtn" disabled>Подождите…</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="confetti-layer" id="confetti"></div>
+
+<script src="puzzles.js"></script>
+<script src="sharecard.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
