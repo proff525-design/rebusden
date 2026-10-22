@@ -34,6 +34,7 @@ global.localStorage = {
 };
 global.window = { scrollTo() {} };
 global.navigator = {};
+global.location = { hash: '', protocol: 'https:', origin: 'https://proff525-design.github.io', pathname: '/rebusden/' };
 
 let fail = 0;
 const ok = (c, m) => { console.log((c ? 'OK   ' : 'FAIL ') + m); if (!c) fail++; };
@@ -48,6 +49,7 @@ const api = new Function(fs.readFileSync('game.js', 'utf8') +
   `; return {
       openDaily, openTrain, submitGuess, useHint, shareText, renderArchive, evaluate,
       BASE_GROUPS, challengeText, forceTrain, builderForm, signLabel, pictureHTML,
+      openChallenge, parseChallengeHash, challengeLink,
       todayKey, yesterdayKey, keyOf, dateOf, dayNumber, puzzleForDate,
       getS: () => S, getDb: () => db,
       MAX: ATTEMPTS_MAX,
@@ -145,20 +147,41 @@ ok(api.BASE_GROUPS.every((g) => g.forms.length >= 1 && g.emoji && g.base), 'у �
 ok(api.BASE_GROUPS.length >= 10, 'картинок в конструкторе минимум 10: ' + api.BASE_GROUPS.length);
 
 /* 13. Челлендж не сливает ответ и содержит длину слова */
-let leak = null, noLen = null;
+let leak = null, noLen = null, noLink = null;
 for (const p of api.BASE_GROUPS.flatMap((g) => g.forms)) {
   const t = api.challengeText(p);
   if (t.toUpperCase().includes(p.answer.toUpperCase())) leak = p.id + ' ' + p.answer;
   if (!new RegExp('\\d+\\s*букв', 'i').test(t)) noLen = p.id;
+  if (!t.includes('#c=' + p.id)) noLink = p.id;
 }
 ok(leak === null, 'текст челленджа не содержит ответа' + (leak ? ' — утечка: ' + leak : ''));
 ok(noLen === null, 'текст челленджа всегда сообщает длину слова');
+ok(noLink === null, 'текст челленджа содержит кликабельную ссылку' + (noLink ? ' — нет ссылки: ' + noLink : ''));
 
 /* 14. Конструктор → игра */
 const pick = api.BASE_GROUPS[2].forms[0];
 api.forceTrain(pick);
 ok(S().mode === 'train' && S().puzzle.id === pick.id && S().status === 'playing',
    '«Играть» из конструктора запускает выбранный ребус в тренировке');
+
+/* 15. Челлендж по ссылке #c=id */
+ok(api.parseChallengeHash('#c=p10') === 'p10', 'хеш #c=p10 разбирается');
+ok(api.parseChallengeHash('#other') === null && api.parseChallengeHash('') === null, 'чужой хеш игнорируется');
+ok(api.challengeLink(PUZZLES[9]) === 'https://proff525-design.github.io/rebusden/#c=p10',
+   'ссылка-челлендж собирается: ' + api.challengeLink(PUZZLES[9]));
+
+/* 16. Приём челленджа: прогресс, статистика, серия не трогается */
+const streakBefore = db().streak;
+ok(api.openChallenge('p02') === true, 'челлендж p02 открывается');
+ok(S().mode === 'challenge' && S().puzzle.id === 'p02' && S().status === 'playing', 'сессия челленджа создана');
+ok(api.openChallenge('nope') === false, 'неизвестный id отклоняется');
+type(S().puzzle.answer.toUpperCase());
+ok(S().status === 'won', 'челлендж решается');
+ok(db().challenges.total === 1 && db().challenges.won === 1, 'челленджи: 1/1 посчитаны');
+ok(db().streak === streakBefore && db().played === db().played, 'серия и дневная статистика не изменились');
+ok(/Челлендж принят/.test(api.shareText()) && !/серия/.test(api.shareText()), 'шеринг челленджа помечен и без серии');
+ok(JSON.parse(mem.rebusdaily_v1).challenge.counted === true, 'челлендж сохранён с флагом подсчёта');
+ok(api.openChallenge('p02') === true && S().counted === true, 'повторное открытие не задвоит статистику');
 
 console.log(`\nОшибок: ${fail}`);
 process.exit(fail ? 1 : 0);

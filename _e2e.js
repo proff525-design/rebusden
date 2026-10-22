@@ -90,6 +90,29 @@ const expected = data.PUZZLES[((dayNo + data.POOL_SALT) % data.PUZZLES.length + 
   ok($('modalStats').className.includes('open') && $('stWon').textContent === '1',
      'статистика: решено=' + $('stWon').textContent);
 
+  /* 7. Челлендж по ссылке #c=p10 (страница загружается с хешем) */
+  const fileURL = encodeURI('file:///' + PROJECT.replace(/^\/+/, '') + 'index.html#c=p10');
+  const dom3 = await JSDOM.fromFile(PROJECT + 'index.html', {
+    url: fileURL, runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true,
+  });
+  await new Promise((res) => {
+    if (dom3.window.document.readyState === 'complete') res();
+    else dom3.window.addEventListener('load', res);
+  });
+  await new Promise((r) => setTimeout(r, 200));
+  const d3 = dom3.window.document;
+  ok(d3.getElementById('puzzleNumber').textContent.includes('челлендж'),
+     'хеш #c=p10 → экран челленджа: ' + d3.getElementById('puzzleNumber').textContent);
+  ok(d3.getElementById('rebusPicture').innerHTML.includes('⚡'), 'открыт ребус p10 (⚡)');
+  d3.getElementById('guessInput').value = 'КОТ';
+  d3.getElementById('guessForm').dispatchEvent(new dom3.window.Event('submit', { bubbles: true, cancelable: true }));
+  ok(d3.getElementById('statusLine').className.includes('good'), 'челлендж решён по ссылке');
+  ok(d3.getElementById('streakVal').textContent === '0', 'челлендж не трогает серию дня');
+  d3.getElementById('btnStats').dispatchEvent(new dom3.window.MouseEvent('click', { bubbles: true }));
+  ok(d3.getElementById('stChall').textContent.includes('1 из 1'),
+     'статистика челленджей: ' + d3.getElementById('stChall').textContent);
+  ok(d3.getElementById('stPlayed').textContent === '0', 'дневная статистика не задета');
+
   console.log(`\nОшибок: ${fail}`);
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error('CRASH', e); process.exit(1); });

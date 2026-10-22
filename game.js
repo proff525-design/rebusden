@@ -8,7 +8,8 @@ const STORE_KEY = 'rebusdaily_v1';
 
 /* ---------- хранилище ---------- */
 function defaultDB() {
-  return { streak: 0, best: 0, lastWinDate: null, played: 0, won: 0, dist: {}, days: {}, train: null };
+  return { streak: 0, best: 0, lastWinDate: null, played: 0, won: 0, dist: {},
+           days: {}, train: null, challenge: null, challenges: { total: 0, won: 0 } };
 }
 function loadDB() {
   try {
@@ -82,6 +83,9 @@ function openTrain(fresh) {
 function persist() {
   if (S.mode === 'train') {
     db.train = { puzzleId: S.puzzle.id, guesses: S.guesses, status: S.status, hints: S.hints };
+  } else if (S.mode === 'challenge') {
+    db.challenge = { puzzleId: S.puzzle.id, guesses: S.guesses, status: S.status,
+                     hints: S.hints, counted: !!S.counted };
   } else {
     const e = db.days[S.key];
     e.puzzleId = S.puzzle.id; e.guesses = S.guesses; e.status = S.status; e.hints = S.hints;
@@ -163,7 +167,8 @@ function renderBoard(c) {
 function renderMeta(c) {
   const n = S.puzzle.answer.length;
   if (c.number) {
-    if (S.mode === 'daily') c.number.textContent = 'Ребус #' + dayNumber(dateOf(S.key)) + ' · сегодня';
+    if (S.mode === 'challenge') c.number.textContent = '🧩 тебе бросили челлендж!';
+    else if (S.mode === 'daily') c.number.textContent = 'Ребус #' + dayNumber(dateOf(S.key)) + ' · сегодня';
     else c.number.textContent = 'Ребус #' + dayNumber(dateOf(S.key)) + ' · ' +
       dateOf(S.key).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
   }
@@ -233,7 +238,8 @@ function submitGuess(e) {
     S.msg = { type: 'good', text: '🎉 Верно! Это «' + S.puzzle.answer + '»' };
     recordResult(true);
     confetti();
-    toast('Отлично! Серия: ' + db.streak + ' 🔥');
+    if (S.mode === 'challenge') toast('Челлендж принят! 🧩 Теперь брось свой — вкладка «Свои»');
+    else toast('Отлично! Серия: ' + db.streak + ' 🔥');
   } else if (S.guesses.length >= ATTEMPTS_MAX) {
     S.status = 'lost';
     S.msg = { type: 'bad', text: '😞 Было слово: ' + S.puzzle.answer };
@@ -249,6 +255,15 @@ function submitGuess(e) {
 
 function recordResult(win) {
   if (S.mode === 'train') return;
+  if (S.mode === 'challenge') {
+    if (!S.counted) {
+      S.counted = true;
+      db.challenges.total++;
+      if (win) db.challenges.won++;
+      saveDB();
+    }
+    return;
+  }
   const entry = db.days[S.key];
   if (entry.counted) return;
   entry.counted = true;
@@ -313,13 +328,15 @@ function shareText() {
   const ans = S.puzzle.answer.toUpperCase();
   const rows = S.guesses.map((g) => evaluate(g, ans)
     .map((s) => s === 'correct' ? '🟩' : s === 'present' ? '🟨' : '⬛').join('')).join('\n');
-  const head = S.mode === 'train'
-    ? '🧠 РебусДень · тренировка'
-    : '🧠 РебусДень #' + dayNumber(dateOf(S.key)) +
+  let head;
+  if (S.mode === 'train') head = '🧠 РебусДень · тренировка';
+  else if (S.mode === 'challenge') head = '🧩 Челлендж принят — РебусДень';
+  else head = '🧠 РебусДень #' + dayNumber(dateOf(S.key)) +
       (S.key === todayKey() ? '' : ' (' + dateOf(S.key).toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' }) + ')');
   const tail = (S.status === 'won' ? S.guesses.length : 'X') + '/' + ATTEMPTS_MAX +
-    (S.mode === 'train' ? '' : '   🔥 серия ' + db.streak);
-  return head + '\n' + rows + '\n' + tail;
+    (S.mode === 'daily' || S.mode === 'date' ? '   🔥 серия ' + db.streak : '');
+  const base = challengeBaseURL();
+  return head + '\n' + rows + '\n' + tail + (base ? '\n🧠 играй сам: ' + base : '');
 }
 async function doShare(btn) {
   const text = shareText();
@@ -404,8 +421,10 @@ function challengeText(p) {
   else if (p.sign === 'del-last') line = p.emoji + ' «,» справа';
   else if (p.sign === 'add-first') line = p.emoji + ' + буква «' + p.letter + '» сверху';
   else line = p.emoji + ' + буква «' + p.letter + '» снизу';
+  const link = challengeLink(p);
   return '🧩 Ребус от меня:\n' + line + ' — слово из ' + p.answer.length + ' букв.\n' +
     'Правила: «,» убирает букву, буква сверху/снизу добавляет её, ⟲ — читай справа налево.\n' +
+    (link ? '▶ Реши прямо в игре: ' + link + '\n' : '') +
     'Угадаешь? 😉';
 }
 async function doShareChallenge() {
@@ -427,6 +446,39 @@ function forceTrain(p) {
   db.train = { puzzleId: p.id, guesses: [], status: 'playing', hints: {} };
   saveDB();
   openTrain(false);
+}
+
+/* ---------- челлендж по ссылке (#c=p10) ---------- */
+function parseChallengeHash(hash) {
+  const m = /^#c=([a-z0-9]+)$/i.exec(hash || '');
+  return m ? m[1] : null;
+}
+function challengeBaseURL() {
+  try {
+    if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) {
+      return location.origin + location.pathname;
+    }
+  } catch (e) {}
+  return null;
+}
+function challengeLink(p) {
+  const base = challengeBaseURL();
+  return base ? base + '#c=' + p.id : null;
+}
+function openChallenge(pid) {
+  const p = PUZZLES.find((x) => x.id === pid);
+  if (!p) return false;
+  const same = db.challenge && db.challenge.puzzleId === pid;
+  const c = same ? db.challenge : { puzzleId: pid, guesses: [], status: 'playing', hints: {}, counted: false };
+  db.challenge = c;
+  saveDB();
+  S = {
+    mode: 'challenge', key: null, puzzle: p,
+    guesses: c.guesses.slice(), status: c.status,
+    hints: Object.assign({}, c.hints), counted: !!c.counted, msg: null,
+  };
+  render();
+  return true;
 }
 
 /* ---------- архив ---------- */
@@ -472,6 +524,9 @@ function renderStats() {
   $('stWon').textContent = db.won;
   $('stStreak').textContent = db.streak;
   $('stBest').textContent = db.best;
+  $('stChall').textContent = db.challenges.total
+    ? '🧩 Челленджи: решено ' + db.challenges.won + ' из ' + db.challenges.total
+    : '🧩 Челленджи: пока ни одного — брось кому-нибудь вызов!';
   const dist = $('dist');
   dist.innerHTML = '';
   const max = Math.max(1, ...Object.values(db.dist));
@@ -591,8 +646,14 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open'));
 });
 
-/* ---------- старт ---------- */
-openDaily(todayKey());
+/* ---------- старт: при наличии #c=… открываем челлендж, иначе рус пазл дня ---------- */
+const initChallenge = parseChallengeHash(typeof location !== 'undefined' ? location.hash : '');
+if (initChallenge && openChallenge(initChallenge)) {
+  setTimeout(() => toast('🧩 Тебе бросили челлендж — реши и брось свой в ответ!'), 500);
+} else {
+  if (initChallenge) toast('Такого челленджа нет 🙂');
+  openDaily(todayKey());
+}
 
 /* ---------- офлайн-режим (PWA) ---------- */
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
