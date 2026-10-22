@@ -5,7 +5,7 @@
 **🌐 Онлайн: https://proff525-design.github.io/rebusden/**
 (открой на телефоне → меню браузера → «Установить приложение» — игра заработает офлайн)
 
-**📱 Android APK (TWA):** `РебусДень-1.0.0.apk` (Git LFS, релиз на GitHub) — Trusted Web Activity поверх живого PWA: иконка в лаунчере, `display: standalone`, полноэкранный режим (для скрытия адресной строки поднят `assetlinks.json` в корне хоста). Подпись: v2+v3, пакет `com.proff525design.rebusden`, minSdk 24 / targetSdk 36. Сборка воспроизводима — см. `BUILD_APK.md` и `build_apk.ps1`.
+**📱 Android APK (TWA):** скачай `rebusden-1.0.0.apk` из релиза **https://github.com/proff525-design/rebusden/releases/tag/v1.0.0** (Git LFS) — Trusted Web Activity поверх живого PWA: иконка в лаунчере, `display: standalone`, полноэкранный режим (для скрытия адресной строки поднят `assetlinks.json` в корне хоста). Подпись: v2+v3, пакет `com.proff525design.rebusden`, minSdk 24 / targetSdk 36. Обновления приходят автоматически — это оболочка над веб-версией. Сборка воспроизводима — см. `BUILD_APK.md` и `build_apk.ps1`.
 
 ## Как запустить локально
 

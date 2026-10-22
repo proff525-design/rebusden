@@ -19,7 +19,7 @@ Pop-Location
 $rel = Join-Path $apkDir "app\build\outputs\apk\release"
 $unsigned = Join-Path $rel "app-release-unsigned.apk"
 $aligned = Join-Path $rel "aligned.apk"
-$out = Join-Path $root "РебусДень-$Version.apk"
+$out = Join-Path $root "rebusden-$Version.apk"
 
 Write-Host "== zipalign =="
 & (Join-Path $bt "zipalign.exe") -p -f 4 $unsigned $aligned

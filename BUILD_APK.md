@@ -25,7 +25,7 @@ Trusted Web Activity через Bubblewrap (Google). Android-проект и `an
 5. Собрать, выровнять и подписать:
    - `cd apk && gradlew.bat --no-daemon assembleRelease`
    - `zipalign -p -f 4 in.apk aligned.apk`
-   - `apksigner sign --ks apk/android.keystore --ks-key-alias android --out РебусДень.apk aligned.apk`
+   - `apksigner sign --ks apk/android.keystore --ks-key-alias android --out rebusden-1.0.0.apk aligned.apk`
 6. Поднять `assetlinks.json` в **корне** хоста
    (`proff525-design.github.io/.well-known/assetlinks.json`) с SHA-256 подписи —
    это скрывает адресную строку (полноэкранная TWA). Репозиторий корня:
